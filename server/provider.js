@@ -68,7 +68,10 @@ const gemini = {
           generationConfig: { responseModalities: ["IMAGE"] },
         }),
       });
-      if (!r.ok) throw Object.assign(new Error(`gemini ${r.status}`), { code: r.status === 400 ? "refused" : "provider_down" });
+      if (!r.ok) {
+        const body = (await r.text().catch(() => "")).slice(0, 300).replace(/s+/g, " ");
+        throw Object.assign(new Error(`gemini ${r.status}: ${body}`), { code: r.status === 400 ? "refused" : "provider_down" });
+      }
       const j = await r.json();
       const part = j.candidates?.[0]?.content?.parts?.find((p) => (p.inlineData || p.inline_data)?.data);
       if (!part) throw Object.assign(new Error("no image"), { code: "refused" }); // safety block or text-only reply

@@ -87,7 +87,7 @@ function fail(job, e) {
   try {
     fs.unlinkSync(path.join(DATA_DIR, `${job.id}-selfie`));
   } catch {}
-  console.error(`job ${job.id} failed: ${job.errorCode}`); // never log images, URLs or IPs
+  console.error(`job ${job.id} failed: ${job.errorCode} (${e?.message || "no detail"})`); // never log images, URLs or IPs
 }
 
 app.post(
