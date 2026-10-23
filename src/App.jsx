@@ -36,6 +36,7 @@ export default function App() {
   const [result, setResult] = useState(null);
   const [error, setError] = useState(null);
   const [capReached, setCapReached] = useState(false);
+  const [demo, setDemo] = useState(false);
   const [upload, setUpload] = useState(null);
   const advancing = useRef(null);
 
@@ -43,7 +44,7 @@ export default function App() {
   const accent = archetypes[result?.archetype]?.accentColor || "#c8ff2e";
 
   useEffect(() => {
-    fetch("/api/status").then((r) => r.json()).then((s) => setCapReached(s.capReached)).catch(() => {});
+    fetch("/api/status").then((r) => r.json()).then((s) => { setCapReached(s.capReached); setDemo(s.provider === "mock"); }).catch(() => {});
   }, []);
   useEffect(() => () => clearTimeout(advancing.current), []);
 
@@ -116,7 +117,7 @@ export default function App() {
             }}
           />
         )}
-        {stage === "result" && <Result r={result} onRetake={restart} />}
+        {stage === "result" && <Result r={result} demo={demo} onRetake={restart} />}
         {stage === "error" && <ErrorScreen error={error} onRetry={() => setStage("selfie")} onRestart={restart} />}
         {stage === "limit" && <Limit message={error?.message} onRestart={restart} />}
         <Footer />
@@ -372,7 +373,7 @@ function Loading({ blob, archetype, onDone, onFail }) {
   );
 }
 
-function Result({ r, onRetake }) {
+function Result({ r, demo, onRetake }) {
   const a = archetypes[r.archetype];
   const [go, setGo] = useState(false);
   const [note, setNote] = useState("");
@@ -450,6 +451,7 @@ function Result({ r, onRetake }) {
         <button className="btn btn-acc" onClick={download}><Svg size={20}><path d="M12 4v11M7 10l5 5 5-5M5 20h14" /></Svg>Download</button>
         <button className="btn btn-cream" onClick={share}><Svg size={20}><path d="M12 15V4M7 9l5-5 5 5M5 14v5h14v-5" /></Svg>Share</button>
       </div>
+      {demo && <p className="mono note" role="status">demo mode: AI avatar generation is off, so this is your own photo in the card.</p>}
       {note && <p className="mono note" role="status">{note}</p>}
       <button className="ghost" onClick={onRetake}><Svg size={18}><path d="M4 12a8 8 0 1 0 2.3-5.7M4 4v5h5" /></Svg>Retake quiz</button>
     </>

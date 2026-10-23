@@ -10,12 +10,10 @@ services:
       - key: NODE_VERSION
         value: 22
       - key: IMAGE_PROVIDER
-        value: gemini
-      - key: GEMINI_API_KEY
-        sync: false   # paste in the Render dashboard, never commit it
+        value: mock   # demo mode: no AI. Switch to gemini/replicate and add its key to enable real avatars
       - key: SIGNING_SECRET
         generateValue: true
       - key: GLOBAL_DAILY_CAP
-        value: 20     # keep low for testing to cap spend
+        value: 500    # demo mode costs nothing; lower this again when real avatars are on
       - key: USER_DAILY_LIMIT
-        value: 3
+        value: 10
