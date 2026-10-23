@@ -1,0 +1,21 @@
+services:
+  - type: web
+    name: who-are-you
+    runtime: node
+    plan: free
+    buildCommand: npm install --include=dev && npm run build
+    startCommand: npm start
+    healthCheckPath: /api/status
+    envVars:
+      - key: NODE_VERSION
+        value: 22
+      - key: IMAGE_PROVIDER
+        value: replicate
+      - key: REPLICATE_API_TOKEN
+        sync: false   # paste in the Render dashboard, never commit it
+      - key: SIGNING_SECRET
+        generateValue: true
+      - key: GLOBAL_DAILY_CAP
+        value: 20     # keep low for testing to cap spend
+      - key: USER_DAILY_LIMIT
+        value: 3
