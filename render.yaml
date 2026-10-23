@@ -10,8 +10,8 @@ services:
       - key: NODE_VERSION
         value: 22
       - key: IMAGE_PROVIDER
-        value: replicate
-      - key: REPLICATE_API_TOKEN
+        value: gemini
+      - key: GEMINI_API_KEY
         sync: false   # paste in the Render dashboard, never commit it
       - key: SIGNING_SECRET
         generateValue: true
