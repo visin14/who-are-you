@@ -215,9 +215,51 @@ function Selfie({ archetype, onSubmit, onBack }) {
   const [check, setCheck] = useState(null);
   const [consent, setConsent] = useState(false);
   const [busy, setBusy] = useState(false);
+  const [cam, setCam] = useState(false);
   const input = useRef();
+  const video = useRef();
+  const stream = useRef();
+
+  const stopCam = () => {
+    stream.current?.getTracks().forEach((t) => t.stop());
+    stream.current = null;
+    setCam(false);
+  };
+  useEffect(() => () => stream.current?.getTracks().forEach((t) => t.stop()), []);
+  useEffect(() => {
+    if (cam && video.current && stream.current) video.current.srcObject = stream.current;
+  }, [cam]);
+
+  const openCam = async () => {
+    setBlob(null);
+    setCheck(null);
+    setPreview(null);
+    if (!navigator.mediaDevices?.getUserMedia)
+      return setCheck({ ok: false, message: "This browser can't open the camera. Upload a photo instead." });
+    try {
+      stream.current = await navigator.mediaDevices.getUserMedia({
+        video: { facingMode: "user", width: { ideal: 1280 }, height: { ideal: 1280 } },
+        audio: false,
+      });
+      setCam(true);
+    } catch {
+      setCheck({ ok: false, message: "We couldn't open your camera. Allow camera access, or upload a photo instead." });
+    }
+  };
+
+  const snap = () => {
+    const v = video.current;
+    if (!v?.videoWidth) return;
+    const c = document.createElement("canvas");
+    c.width = v.videoWidth;
+    c.height = v.videoHeight;
+    c.getContext("2d").drawImage(v, 0, 0);
+    stopCam();
+    c.toBlob((b) => b && onFile(new File([b], "selfie.jpg", { type: "image/jpeg" })), "image/jpeg", 0.92);
+  };
 
   const onFile = async (file) => {
+    if (stream.current) stopCam();
     setBlob(null);
     setCheck(null);
     if (!file) return;
@@ -259,26 +301,38 @@ function Selfie({ archetype, onSubmit, onBack }) {
       <input ref={input} type="file" accept={TYPES.join(",")} hidden onChange={(e) => onFile(e.target.files[0])} />
       <div className="polaroid" onDragOver={(e) => e.preventDefault()} onDrop={(e) => { e.preventDefault(); onFile(e.dataTransfer.files[0]); }}>
         <div className="pic">
-          {preview ? (
+          {cam ? (
+            <video ref={video} autoPlay playsInline muted aria-label="Live camera preview" />
+          ) : preview ? (
             <img src={preview} alt="Your selfie preview" />
           ) : (
-            <button className="drop" onClick={() => input.current.click()}>
+            <button className="drop" onClick={openCam}>
               <Svg size={40} sw={2.4} stroke="#0b0a12"><path d="M3 8.5A2.5 2.5 0 0 1 5.5 6h2l1.5-2h6l1.5 2h2A2.5 2.5 0 0 1 21 8.5v9a2.5 2.5 0 0 1-2.5 2.5h-13A2.5 2.5 0 0 1 3 17.5z" /><circle cx="12" cy="13" r="4" /></Svg>
-              <span className="disp" style={{ fontSize: 15, fontWeight: 800, letterSpacing: "-.01em" }}>tap to add a selfie</span>
-              <span className="mono" style={{ fontSize: 11 }}>or drag one in here</span>
+              <span className="disp" style={{ fontSize: 15, fontWeight: 800, letterSpacing: "-.01em" }}>tap to take a selfie</span>
+              <span className="mono" style={{ fontSize: 11 }}>opens your camera</span>
             </button>
           )}
           {check && !check.ok && <div className="qmark"><span className="disp">?</span></div>}
         </div>
         <div className="cap">
-          <span className="mono">{busy ? "checking…" : caption}</span>
-          {preview && (
-            <button className="iconbtn" aria-label="Choose a different photo" onClick={() => input.current.click()} style={{ width: 44, height: 44, boxShadow: "0 3px 0 #0b0a12", marginBottom: -10 }}>
+          <span className="mono">{busy ? "checking…" : cam ? "say cheese" : caption}</span>
+          {preview && !cam && (
+            <button className="iconbtn" aria-label="Retake selfie" onClick={openCam} style={{ width: 44, height: 44, boxShadow: "0 3px 0 #0b0a12", marginBottom: -10 }}>
               <Svg size={18}><path d="M20 11a8 8 0 1 0-2.3 5.7M20 4v7h-7" /></Svg>
             </button>
           )}
         </div>
       </div>
+      {cam ? (
+        <div style={{ display: "flex", gap: 12 }}>
+          <button className="btn btn-lime" style={{ flex: 1 }} onClick={snap}><Spark size={20} />snap it</button>
+          <button className="btn btn-cream" onClick={stopCam}>cancel</button>
+        </div>
+      ) : (
+        <button className="ghost" onClick={() => input.current.click()}>
+          <Svg size={18}><path d="M12 15V4M7 9l5-5 5 5M5 14v5h14v-5" /></Svg>upload a photo instead
+        </button>
+      )}
       <ul className="tips" aria-label="Selfie tips">
         {tips.map(([t, c, icon]) => (
           <li key={t} className="glass"><Svg stroke={c} sw={2.4}>{icon}</Svg>{t}</li>
